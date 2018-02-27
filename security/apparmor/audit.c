@@ -216,8 +216,8 @@ int aa_audit(int type, struct aa_profile *profile, struct common_audit_data *sa,
 
 	if (aad(sa)->type == AUDIT_APPARMOR_KILL)
 		(void)send_sig_info(SIGKILL, NULL,
-			sa->type == LSM_AUDIT_DATA_TASK && sa->u.tsk ?
-				    sa->u.tsk : current);
+			sa->type == LSM_AUDIT_DATA_TASK && sa->aad->tsk ?
+				    sa->aad->tsk : current);
 
 	if (aad(sa)->type == AUDIT_APPARMOR_ALLOWED)
 	  return complain_error(aad(sa)->error);
