@@ -49,8 +49,8 @@ static int prepend(char **buffer, int buflen, const char *str, int namelen)
  *     of chroot) and specifically directed to connect paths to
  *     namespace root.
  */
-static int disconnect(struct path *path, char *buf, char **name, int flags,
-		      const char *disconnected)
+static int disconnect(const struct path *path, char *buf, char **name,
+		      int flags)
 {
 	int error = 0;
 
@@ -63,14 +63,9 @@ static int disconnect(struct path *path, char *buf, char **name, int flags,
 		error = -EACCES;
 		if (**name == '/')
 			*name = *name + 1;
-	} else {
-		if (**name != '/')
-			/* CONNECT_PATH with missing root */
-			error = prepend(name, *name - buf, "/", 1);
-		if (!error && disconnected)
-			error = prepend(name, *name - buf, disconnected,
-					strlen(disconnected));
-	}
+	} else if (**name != '/')
+		/* CONNECT_PATH with missing root */
+		error = prepend(name, *name - buf, "/", 1);
 
 	return error;
 }
@@ -111,12 +106,10 @@ static int d_namespace_path(struct path *path, char *buf, char **name,
 			/* TODO: convert over to using a per namespace
 			 * control instead of hard coded /proc
 			 */
-			error = prepend(name, *name - buf, "/proc", 5);
-			goto out;
+			return prepend(name, *name - buf, "/proc", 5);
 		} else
-			error = disconnect(path, buf, name, flags,
-					   disconnected);
-		goto out;
+			return disconnect(path, buf, name, flags);
+		return 0;
 	}
 
 	/* resolve paths relative to chroot?*/
@@ -165,7 +158,7 @@ static int d_namespace_path(struct path *path, char *buf, char **name,
 	}
 
 	if (!connected)
-		error = disconnect(path, buf, name, flags, disconnected);
+		error = disconnect(path, buf, name, flags);
 
 out:
 	/*

@@ -102,17 +102,20 @@ int aa_audit_file(struct aa_profile *profile, struct file_perms *perms,
 		  kuid_t ouid, const char *info, int error)
 {
 	int type = AUDIT_APPARMOR_AUTO;
-
-	DEFINE_AUDIT_DATA(sa, LSM_AUDIT_DATA_NONE, op);
-	aad(&sa)->request = request;
-	aad(&sa)->name = name;
-	aad(&sa)->target = target;
-	aad(&sa)->fs.ouid = ouid;
-	aad(&sa)->info = info;
-	aad(&sa)->error = error;
+	struct common_audit_data sa;
+	struct apparmor_audit_data aad = {0,};
+	sa.type = LSM_AUDIT_DATA_TASK;
 	sa.u.tsk = NULL;
+	sa.aad = &aad;
+	aad.op = op,
+	aad.fs.request = request;
+	aad.name = name;
+	aad.fs.target = target;
+	aad.fs.ouid = ouid;
+	aad.info = info;
+	aad.error = error;
 
-	if (likely(!aad(&sa)->error)) {
+	if (likely(!sa.aad->error)) {
 		u32 mask = perms->audit;
 
 		if (unlikely(AUDIT_MODE(profile) == AUDIT_ALL))
